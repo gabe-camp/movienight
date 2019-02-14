@@ -55,6 +55,38 @@ def log_error(e):
     print(e)
 # end #
 
-
+# body
+#   div id=wrapper
+#       div id=root
+#           div id=pagecontent class=pagecontent
+#               div id=content-2-wide class=redesign
+#                   div id=main
+#                       div class="article listo nm"
+#                           div class="list detail"
+#                               h4 class=li_group <<< Month and day in which movies are released
+#                               div class="list_item odd" | "list_item even"
+#                                    table class="nm-title-overview-widget-layout"
+#                                       tbody
+#                                           td id="img_primary"  << movie poster img
+#                                           td class="overview-top"
+#                                               h4  << title (year)
+#                                               p class="cert-runtime-genre"
+#                                                   img class="absmiddle certimage" title=<rating>
+#                                                   time << running time
+#                                                   span <genre>
+#                                                   span <genre>
+#                                               div class="rating_txt"
+#                                                   span <metascore>
+#                                               div class="outline"
+#                                               div class="txt-block"
+#                                                   h5 class="inline" Director
+#                                                   a href <name>
+#                                               div class="txt-block
+#                                                   h5 class="inline" Stars
+#                                                   a href <name>
+#                                                   a href <name>
 raw_html = simple_get(imdb_url_comingsoon+this_month)
 html = BeautifulSoup(raw_html, 'html.parser')
+#print(html.prettify())
+for child in html.find("div", class_="list detail").children:
+    print(child)
