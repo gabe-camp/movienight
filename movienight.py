@@ -64,6 +64,26 @@ this_month = get_this_month()
 NUM_MONTHS = 8 # number of months to search ahead
 all_movies = {}
 
+class Movie:
+    def __init__(self, release_date, title):
+        self.release_date = release_date
+        self.title = title
+        self.genre = ""
+        self.outline = ""
+        self.director = ""
+        self.stars = []
+        self.runtime = ""
+        self.rating = ""
+
+    def print(self):
+        return "{0} : {1}".format(self.release_date, self.title)
+
+    def __str__(self):
+        return self.print()
+    def __unicode__(self):
+        return self.print()
+    def __repr__(self):
+        return self.print()
 
 for i in range(0,NUM_MONTHS):
     next_month = get_x_month(this_month,i)
@@ -71,7 +91,7 @@ for i in range(0,NUM_MONTHS):
     raw_html = simple_get(imdb_url_comingsoon+date_format(next_month))
     full_page = BeautifulSoup(raw_html, 'html.parser')
 
-    releases = {}
+    releases = []
     list_html = full_page.find("div", class_="list detail")
 
     release_date = ""
@@ -79,9 +99,10 @@ for i in range(0,NUM_MONTHS):
     for child in data:
         if child.name and 'h4' in child.name: #its a date
             release_date = child.text.strip()
-            releases[release_date] = []
-        elif child.name and 'div' in child.name: #its a title
-            releases[release_date].append(child.h4.text)
+        elif child.name and 'div' in child.name: #its a movie
+            movie = Movie(release_date, child.h4.text)
+            #get other data from child and set it in movie
+            releases.append(movie)
         else:
             continue
 
