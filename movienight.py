@@ -7,8 +7,6 @@ from contextlib import closing
 from datetime import date
 import pprint
 
-NUM_MONTHS = 12 # number of months to search ahead
-
 
 def get_this_month():
     return date.today()
@@ -58,49 +56,34 @@ def log_error(e):
     print(e)
 # end #
 
-# div class="list detail"
-#   h4 class=li_group <<< Month and day in which movies are released
-#   div class="list_item odd" | "list_item even"
-#       table class="nm-title-overview-widget-layout"
-#           tbody
-#               td id="img_primary"  << movie poster img
-#               td class="overview-top"
-#                   h4  << title (year)
-#                   p class="cert-runtime-genre"
-#                       img class="absmiddle certimage" title=<rating>
-#                       time << running time
-#                       span <genre>
-#                       span <genre>
-#                   div class="rating_txt"
-#                       span <metascore>
-#                   div class="outline"
-#                       div class="txt-block"
-#                           h5 class="inline" Director
-#                           a href <name>
-#                       div class="txt-block
-#                           h5 class="inline" Stars
-#                           a href <name>
-#                           a href <name>
 
 imdb_url_showtimes = 'https://www.imdb.com/showtimes/'
 default_location = 'CA/L7P3W6'
 imdb_url_comingsoon = 'https://www.imdb.com/movies-coming-soon/'
 this_month = get_this_month()
+NUM_MONTHS = 8 # number of months to search ahead
 all_movies = {}
-#month = {}
+
+
 for i in range(0,NUM_MONTHS):
     next_month = get_x_month(this_month,i)
-    #month[date_format(next_month)] = []
     all_movies[date_format(next_month)] = []
     raw_html = simple_get(imdb_url_comingsoon+date_format(next_month))
-    html = BeautifulSoup(raw_html, 'html.parser')
+    full_page = BeautifulSoup(raw_html, 'html.parser')
 
     releases = {}
-    content = html.find("div", class_="list detail")
-    for release_day in content.find_all("h4", class_="li_group"):
-        release_day_text = release_day.text.strip()
-        releases[release_day_text] = []
-        #print(release_day_text)
+    list_html = full_page.find("div", class_="list detail")
+
+    release_date = ""
+    data = list_html.children
+    for child in data:
+        if child.name and 'h4' in child.name: #its a date
+            release_date = child.text.strip()
+            releases[release_date] = []
+        elif child.name and 'div' in child.name: #its a title
+            releases[release_date].append(child.h4.text)
+        else:
+            continue
 
     all_movies[date_format(next_month)].append(releases)
 
