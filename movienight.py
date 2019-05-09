@@ -7,7 +7,9 @@ from contextlib import closing
 from datetime import date
 import pprint
 
-
+#
+# convenience functions for working with dates in url
+#
 def get_this_month():
     return date.today()
 
@@ -30,8 +32,9 @@ def get_x_month(d, x):
 def date_format(d):
     return d.strftime("/%Y-%m/")
 
-
-
+#
+# functions for grabbing url to scrape
+#
 # https://realpython.com/python-web-scraping-practical-introduction/ #
 # start #
 def simple_get(url):
@@ -57,6 +60,9 @@ def log_error(e):
 # end #
 
 
+#
+# static definitions
+#
 imdb_url_showtimes = 'https://www.imdb.com/showtimes/'
 default_location = 'CA/L7P3W6'
 imdb_url_comingsoon = 'https://www.imdb.com/movies-coming-soon/'
@@ -64,7 +70,14 @@ this_month = get_this_month()
 NUM_MONTHS = 8 # number of months to search ahead
 all_movies = {}
 
+
+#
+# data class
+#
 class Movie:
+    '''
+    Data class to hold movie details when scraping
+    '''
     def __init__(self, release_date, title):
         self.release_date = release_date
         self.title = title
@@ -76,7 +89,11 @@ class Movie:
         self.rating = ""
 
     def print(self):
-        return "{0} : {1}".format(self.release_date, self.title)
+        return "{0} : {1} : {2} : {3}".format(
+                    self.release_date,
+                    self.title,
+                    self.rating,
+                    self.runtime)
 
     def __str__(self):
         return self.print()
@@ -85,23 +102,44 @@ class Movie:
     def __repr__(self):
         return self.print()
 
+#
+# do the scraping
+#
 for i in range(0,NUM_MONTHS):
     next_month = get_x_month(this_month,i)
     all_movies[date_format(next_month)] = []
     raw_html = simple_get(imdb_url_comingsoon+date_format(next_month))
     full_page = BeautifulSoup(raw_html, 'html.parser')
-
+    # type(full_page) = <class 'bs4.BeautifulSoup'>
     releases = []
     list_html = full_page.find("div", class_="list detail")
-
+    # type(list_html) = <class 'bs4.element.Tag'>
     release_date = ""
     data = list_html.children
+    # type(data) = <class 'list_iterator'>
     for child in data:
-        if child.name and 'h4' in child.name: #its a date
+        # get date under which a list of movies will be released on
+        if child.name and 'h4' in child.name:
             release_date = child.text.strip()
-        elif child.name and 'div' in child.name: #its a movie
+        # get movie title(s) corresponding to the already found release_date
+        elif child.name and 'div' in child.name:
             movie = Movie(release_date, child.h4.text)
-            #get other data from child and set it in movie
+            #print("--|" + child.text + "|--")
+            # get other data from child and set it in movie
+            # genre
+            if child.p.img:
+                #print("Rating: {0}".format(child.p.img['title']))
+                movie.rating = child.p.img['title']
+            # outline
+
+            # director
+
+            # stars
+
+            # runtime
+            if child.p.time:
+                movie.runtime = child.p.time.text
+            # rating
             releases.append(movie)
         else:
             continue
