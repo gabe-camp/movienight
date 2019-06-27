@@ -32,6 +32,7 @@ def get_x_month(d, x):
 def date_format(d):
     return d.strftime("/%Y-%m/")
 
+
 #
 # functions for grabbing url to scrape
 #
@@ -63,11 +64,9 @@ def log_error(e):
 #
 # static definitions
 #
-imdb_url_showtimes = 'https://www.imdb.com/showtimes/'
-default_location = 'CA/L7P3W6'
-imdb_url_comingsoon = 'https://www.imdb.com/movies-coming-soon/'
-this_month = get_this_month()
-NUM_MONTHS = 8 # number of months to search ahead
+imdb_url = 'https://www.imdb.com/calendar'
+default_region = '?region=CA'
+NUM_MONTHS = 8
 all_movies = {}
 
 
@@ -105,46 +104,24 @@ class Movie:
 #
 # do the scraping
 #
-for i in range(0,NUM_MONTHS):
-    next_month = get_x_month(this_month,i)
-    all_movies[date_format(next_month)] = []
-    raw_html = simple_get(imdb_url_comingsoon+date_format(next_month))
-    full_page = BeautifulSoup(raw_html, 'html.parser')
-    # type(full_page) = <class 'bs4.BeautifulSoup'>
-    releases = []
-    list_html = full_page.find("div", class_="list detail")
-    # type(list_html) = <class 'bs4.element.Tag'>
-    release_date = ""
-    data = list_html.children
-    # type(data) = <class 'list_iterator'>
-    for child in data:
-        # get date under which a list of movies will be released on
-        if child.name and 'h4' in child.name:
-            release_date = child.text.strip()
-        # get movie title(s) corresponding to the already found release_date
-        elif child.name and 'div' in child.name:
-            movie = Movie(release_date, child.h4.text)
-            #print("--|" + child.text + "|--")
-            # get other data from child and set it in movie
-            # genre
-            if child.p.img:
-                #print("Rating: {0}".format(child.p.img['title']))
-                movie.rating = child.p.img['title']
-            # outline
+raw_html = simple_get(imdb_url+default_region)
+full_page = BeautifulSoup(raw_html, 'html.parser')
+# type(full_page) = <class 'bs4.BeautifulSoup'>
+releases = []
+list_html = full_page.find("div", id="main")
+for element in list_html.descendants:
+   if 'Tag' in str(type(element)):
+        if element.name == 'h4':
+            # this is a date, ie '27 June 2019'
+            # parse into a new date object
+            # will be key for next releases seen for the all_movies dict
+            # can use a timedelta to determine if we have hit NUM_MONTHS
+            pass
+        elif element.name == 'a':
+            # this is the link to the page with the movie vitals (element['href'])
+            # this is the title of the movie + year (element.string)
+            pass
 
-            # director
 
-            # stars
-
-            # runtime
-            if child.p.time:
-                movie.runtime = child.p.time.text
-            # rating
-            releases.append(movie)
-        else:
-            continue
-
-    all_movies[date_format(next_month)].append(releases)
-
-pp = pprint.PrettyPrinter(indent=2)
-pp.pprint(all_movies)
+#pp = pprint.PrettyPrinter(indent=2)
+#pp.pprint(all_movies)
