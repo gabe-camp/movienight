@@ -68,7 +68,7 @@ class Movie:
     def __init__(self, release_date, title):
         self.release_date = release_date
         self.title = title
-        self.genre = ""
+        self.genre = []
         self.outline = ""
         self.director = ""
         self.stars = []
@@ -92,16 +92,40 @@ for i in range(0,NUM_MONTHS):
     full_page = BeautifulSoup(raw_html, 'html.parser')
 
     releases = []
+    
+    # <body> -> <div id=wrapper -> <div id=root -> <div id=pagecontent -> <div id=content-2-wide -> <div id=main -> <div class='article listo nm' -> <div class='list detail' -> <div class='list detail' 
     list_html = full_page.find("div", class_="list detail")
-
+    #      -> <h4 -> <a href=[more info link>[title (year)]
+    #      -> <p class='cert-runtime-genre 
+    #        -> <img title='[cert]'
+    #        -> <time >[runtime]
+    #        -> <span >[genre] *repeats
+    #      -> </p>
+    #      -> <div class='outline'>[outline]
+    #      -> <div class='txt-block -> <h5 class='inline'>Director: -> <span -> <a >[director]
+    #      -> <div class='txt-block -> <h5 class='inline'>Stars: -> (<a >[actor])*
     release_date = ""
     data = list_html.children
     for child in data:
-        if child.name and 'h4' in child.name: #its a date
+        #   -> <h4 class='li_group' -> <a name='[release date, ex Aug 30]'
+        if child.name and 'h4' in child.name:
             release_date = child.text.strip()
-        elif child.name and 'div' in child.name: #its a movie
+        #   -> <div class='list_item odd' -> <table -> <tbody -> <tr -> <td class='overview-top 
+        elif child.name and 'div' in child.name:
+            # h4.text = "movie title (year)"
             movie = Movie(release_date, child.h4.text)
-            #get other data from child and set it in movie
+            # p.img.title = cert (if exists)
+            # p.time.text = runtime
+            # loop
+            #   p.span.text = genre
+            # div.class = 'outline' == outline
+            # loop
+            #   div.class = 'txt-block' 
+            #     if h5.span.text == Director:
+            #        a.text = director
+            #     else h5.span.text == Stars:
+            #        loop
+            #          a.text = actor
             releases.append(movie)
         else:
             continue
