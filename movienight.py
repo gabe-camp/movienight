@@ -127,19 +127,31 @@ for i in range(0,NUM_MONTHS):
     #      -> <div class='outline'>[outline]
     #      -> <div class='txt-block -> <h5 class='inline'>Director: -> <span -> <a >[director]
     #      -> <div class='txt-block -> <h5 class='inline'>Stars: -> (<a >[actor])*
-    release_date = ""
+    am_parsing = False
+    movie = ""
+    release_date = ""  # many-to-one, release_date <-> title
     for child in list_html.descendants:
         if isinstance(child, Tag):
             #   -> <h4 class='li_group' -> <a name='[release date, ex Aug 30]'
-            if 'h4' in child.name and len(child.attrs) > 0 and 'li_group' in child['class'][0]:
+            if 'h4' in child.name and len(child.attrs) > 0 and 'li_group' in child['class'][0]: # release date
                 release_date = child.text.strip()
             #   -> <div class='list_item odd' -> <table -> <tbody -> <tr -> <td class='overview-top
-            elif 'div' in child.name and len(child.attrs) > 0 and 'list_item' in child['class'][0]:
+            elif 'div' in child.name and len(child.attrs) > 0 and 'list_item' in child['class'][0]: # title
                 # h4.text = "movie title (year)"
-                movie = Movie(release_date, child.h4.text)
+                title = child.h4.text
+                if am_parsing:
+                    # at this point we are finished parsing the current "list item"/movie
+                    # so can add it to the months releases
+                    releases.append(movie)
+                    # and a new movie instance can be initiated
+                    movie = Movie(release_date, title)
+                else:
+                    # first time through
+                    movie = Movie(release_date, title)
+                    am_parsing = True
                 # p.img.title = cert (if exists)
                 genres = []
-                if child.p and len(child.attrs) > 0 and 'cert-runtime-genre' in child.p['class'][0]:
+                if child.p and len(child.attrs) > 0 and 'cert-runtime-genre' in child.p['class'][0]: # rating, runtime, genre
                     for tag in child.p.contents:
                         if isinstance(tag, Tag):
                             if 'img' in tag.name:
@@ -152,13 +164,13 @@ for i in range(0,NUM_MONTHS):
                             if 'span' in tag.name:
                                 movie.genres.append(tag.text)
                 # div.class = 'outline' == outline
-            elif 'div' in child.name and 'outline' in child['class'][0]:
+            elif 'div' in child.name and 'outline' in child['class'][0]: # outline
                 movie.outline = child.text
                 # loop
                 #   div.class = 'txt-block'
                 #     if h5.span.text == Director:
                 #        a.text = director
-            elif 'div' in child.name and 'txt-block' in child['class'][0]:
+            elif 'div' in child.name and 'txt-block' in child['class'][0]: # director, stars
                 try:
                     if 'Director' in child.h5.text:
                         for tag in child.contents:
@@ -166,7 +178,8 @@ for i in range(0,NUM_MONTHS):
                                 if 'a' in tag.name:
                                     movie.directors.append(tag.text.strip())
                 except AttributeError as ae:
-                    print("{0}".format(child))
+                    #print("{0}".format(child))
+                    continue
                 #     else h5.span.text == Stars:
                 #        loop
                 #          a.text = actor
@@ -176,17 +189,11 @@ for i in range(0,NUM_MONTHS):
                             if isinstance(tag, Tag):
                                 if 'a' in tag.name:
                                     movie.stars.append(tag.text.strip())
-
-                        # at this point we are finished parsing the current "list item"/movie
-                        # so can add it to the months releases
-                        releases.append(movie)
                 except AttributeError as ae:
-                    print("{0}".format(child))
-
+                    #print("{0}".format(child))
+                    continue
             else:
                 continue
-
-
 
     all_movies[date_format(next_month)].append(releases)
 
