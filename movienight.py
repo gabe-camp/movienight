@@ -110,9 +110,9 @@ class MovieNightData:
              "title": self.title,
              "rating": self.rating,
              "runtime": self.runtime,
-             "genres": "".join(self.genres),
-             "directors": ",".join(self.directors),
-             "stars": ",".join(self.stars),
+             "genres": self.genres,
+             "directors": self.directors,
+             "stars": self.stars,
              "outline": self.outline}
         return str(m)
 
