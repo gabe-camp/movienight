@@ -23,15 +23,16 @@ class MovieNightDefs:
 # convenience functions for working with dates in url
 #
 class MovieNightUtils:
-    def get_this_month(self):
+    @staticmethod
+    def get_this_month():
         return date.today()
 
+    @staticmethod
+    def get_next_month(d):
+        return MovieNightUtils.get_x_month(d, 1)
 
-    def get_next_month(self, d):
-        return self.get_x_month(d, 1)
-
-
-    def get_x_month(self, d, x):
+    @staticmethod
+    def get_x_month(d, x):
         year = d.year
         month = d.month
         month = month + x
@@ -40,9 +41,8 @@ class MovieNightUtils:
             month = month - 12
         return date(year, month, 1)
 
-
-    # sample date = '/2019-02/'
-    def date_format(self, d):
+    @staticmethod
+    def date_format(d):  # sample date = '/2019-02/'
         return d.strftime("/%Y-%m/")
 
     #
@@ -50,25 +50,26 @@ class MovieNightUtils:
     #
     # https://realpython.com/python-web-scraping-practical-introduction/ #
     # start #
-    def simple_get(self, url):
+    @staticmethod
+    def simple_get(url):
         try:
             with closing(get(url, stream=True)) as resp:
-                if self.is_good_response(resp):
+                if MovieNightUtils.is_good_response(resp):
                     return resp.content
                 else:
                     return None
         except RequestException as e:
-            self.log_error('Error during requests to {0} : {1}'.format(url,str(e)))
+            MovieNightUtils.log_error('Error during requests to {0} : {1}'.format(url, str(e)))
 
-
-    def is_good_response(self, resp):
+    @staticmethod
+    def is_good_response(resp):
         content_type = resp.headers['Content-Type'].lower()
         return (resp.status_code == 200
                 and content_type is not None
                 and content_type.find('html') >= -1)
 
-
-    def log_error(self, e):
+    @staticmethod
+    def log_error(e):
         print(e)
     # end #
 
@@ -77,20 +78,23 @@ class MovieNightUtils:
 # data class
 #
 class MovieNightData:
-    '''
+    """
     Data class to hold movie details when scraping
-    '''
+    """
     def __init__(self, release_date, title):
         self.release_date = release_date
         self.title = title
         self.genres = []
         self.outline = ""
-        self.directors= []
+        self.directors = []
         self.stars = []
         self.runtime = ""
         self.rating = ""
 
     def print(self):
+        return self.print_nice()
+
+    def print_nice(self):
         return "{0} : {1} : {2} : {3} : {4} : {5} : {6} : {7}".format(
                     self.release_date,
                     self.title,
@@ -101,23 +105,37 @@ class MovieNightData:
                     ",".join(self.stars),
                     self.outline.strip())
 
+    def print_raw(self):
+        m = {"release_date": self.release_date,
+             "title": self.title,
+             "rating": self.rating,
+             "runtime": self.runtime,
+             "genres": self.genres,
+             "directors": self.directors,
+             "stars": self.stars,
+             "outline": self.outline}
+        return str(m)
+
     def __str__(self):
         return self.print()
+
     def __unicode__(self):
         return self.print()
+
     def __repr__(self):
         return self.print()
 
 
 class MovieNight:
-    def movienight(self):
+    @staticmethod
+    def movienight():
         all_movies = {}
         this_month = MovieNightUtils.get_this_month()
-        for i in range(0,MovieNightDefs.NUM_MONTHS):
-            next_month = MovieNightUtils.get_x_month(this_month,i)
+        for i in range(0, MovieNightDefs.NUM_MONTHS):
+            next_month = MovieNightUtils.get_x_month(this_month, i)
             all_movies[MovieNightUtils.date_format(next_month)] = []
             raw_html = MovieNightUtils.simple_get(
-                MovieNightDefs.imdb_url_coming_soon+MovieNightUtils.date_format(next_month))
+                MovieNightDefs.imdb_url_coming_soon + MovieNightUtils.date_format(next_month))
             full_page = BeautifulSoup(raw_html, 'html.parser')
 
             releases = []
@@ -139,10 +157,10 @@ class MovieNight:
             for child in list_html.descendants:
                 if isinstance(child, Tag):
                     #   -> <h4 class='li_group' -> <a name='[release date, ex Aug 30]'
-                    if 'h4' in child.name and len(child.attrs) > 0 and 'li_group' in child['class'][0]: # release date
+                    if 'h4' in child.name and len(child.attrs) > 0 and 'li_group' in child['class'][0]:  # release date
                         release_date = child.text.strip()
                     #   -> <div class='list_item odd' -> <table -> <tbody -> <tr -> <td class='overview-top
-                    elif 'div' in child.name and len(child.attrs) > 0 and 'list_item' in child['class'][0]: # title
+                    elif 'div' in child.name and len(child.attrs) > 0 and 'list_item' in child['class'][0]:  # title
                         # h4.text = "movie title (year)"
                         title = child.h4.text
                         if am_parsing:
@@ -156,7 +174,6 @@ class MovieNight:
                             movie = MovieNightData(release_date, title)
                             am_parsing = True
                         # p.img.title = cert (if exists)
-                        genres = []
                         if child.p and len(child.attrs) > 0 and 'cert-runtime-genre' in child.p['class'][0]: # rating, runtime, genre
                             for tag in child.p.contents:
                                 if isinstance(tag, Tag):
@@ -170,21 +187,21 @@ class MovieNight:
                                     if 'span' in tag.name:
                                         movie.genres.append(tag.text)
                         # div.class = 'outline' == outline
-                    elif 'div' in child.name and 'outline' in child['class'][0]: # outline
+                    elif 'div' in child.name and 'outline' in child['class'][0]:  # outline
                         movie.outline = child.text
                         # loop
                         #   div.class = 'txt-block'
                         #     if h5.span.text == Director:
                         #        a.text = director
-                    elif 'div' in child.name and 'txt-block' in child['class'][0]: # director, stars
+                    elif 'div' in child.name and 'txt-block' in child['class'][0]:  # director, stars
                         try:
                             if 'Director' in child.h5.text:
                                 for tag in child.contents:
                                     if isinstance(tag, Tag):
                                         if 'a' in tag.name:
                                             movie.directors.append(tag.text.strip())
-                        except AttributeError as ae:
-                            #print("{0}".format(child))
+                        except AttributeError:
+                            # print("{0}".format(child))
                             continue
                         #     else h5.span.text == Stars:
                         #        loop
@@ -195,13 +212,19 @@ class MovieNight:
                                     if isinstance(tag, Tag):
                                         if 'a' in tag.name:
                                             movie.stars.append(tag.text.strip())
-                        except AttributeError as ae:
-                            #print("{0}".format(child))
+                        except AttributeError:
+                            # print("{0}".format(child))
                             continue
                     else:
                         continue
 
             all_movies[MovieNightUtils.date_format(next_month)].append(releases)
+        return all_movies
 
-        pp = pprint.PrettyPrinter(indent=2)
-        pp.pprint(all_movies)
+
+if __name__ == '__main__':
+    movies = MovieNight.movienight()
+
+    pp = pprint.PrettyPrinter(indent=2)
+    pp.pprint(movies)
+
