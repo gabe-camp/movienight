@@ -28,7 +28,8 @@ jobs:
       - run:
           name: testing
           command: |
-            python3 -m pytest ./
+            . venv/bin/activate
+            python -m pytest ./
       - store_test_results:
           path: test-results
       - store_artifacts:
