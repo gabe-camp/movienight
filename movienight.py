@@ -140,26 +140,14 @@ class MovieNight:
 
             releases = []
 
-            # <body> -> <div id=wrapper -> <div id=root -> <div id=pagecontent -> <div id=content-2-wide -> <div id=main -> <div class='article listo nm' -> <div class='list detail' -> <div class='list detail'
             list_html = full_page.find("div", class_="list detail")
-            #      -> <h4 -> <a href=[more info link>[title (year)]
-            #      -> <p class='cert-runtime-genre
-            #        -> <img title='[cert]'
-            #        -> <time >[runtime]
-            #        -> <span >[genre] *repeats
-            #      -> </p>
-            #      -> <div class='outline'>[outline]
-            #      -> <div class='txt-block -> <h5 class='inline'>Director: -> <span -> <a >[director]
-            #      -> <div class='txt-block -> <h5 class='inline'>Stars: -> (<a >[actor])*
             am_parsing = False
             movie = ""
             release_date = ""  # many-to-one, release_date <-> title
             for child in list_html.descendants:
                 if isinstance(child, Tag):
-                    #   -> <h4 class='li_group' -> <a name='[release date, ex Aug 30]'
                     if 'h4' in child.name and len(child.attrs) > 0 and 'li_group' in child['class'][0]:  # release date
                         release_date = child.text.strip()
-                    #   -> <div class='list_item odd' -> <table -> <tbody -> <tr -> <td class='overview-top
                     elif 'div' in child.name and len(child.attrs) > 0 and 'list_item' in child['class'][0]:  # title
                         # h4.text = "movie title (year)"
                         title = child.h4.text
@@ -182,17 +170,11 @@ class MovieNight:
                         # p.time.text = runtime
                                     if 'time' in tag.name:
                                         movie.runtime = tag.text
-                        # loop
                         #   p.span.text = genre
                                     if 'span' in tag.name:
                                         movie.genres.append(tag.text)
-                        # div.class = 'outline' == outline
                     elif 'div' in child.name and 'outline' in child['class'][0]:  # outline
                         movie.outline = child.text
-                        # loop
-                        #   div.class = 'txt-block'
-                        #     if h5.span.text == Director:
-                        #        a.text = director
                     elif 'div' in child.name and 'txt-block' in child['class'][0]:  # director, stars
                         try:
                             if 'Director' in child.h5.text:
@@ -201,11 +183,7 @@ class MovieNight:
                                         if 'a' in tag.name:
                                             movie.directors.append(tag.text.strip())
                         except AttributeError:
-                            # print("{0}".format(child))
                             continue
-                        #     else h5.span.text == Stars:
-                        #        loop
-                        #          a.text = actor
                         try:
                             if 'Stars' in child.h5.text:
                                 for tag in child.contents:
@@ -213,7 +191,6 @@ class MovieNight:
                                         if 'a' in tag.name:
                                             movie.stars.append(tag.text.strip())
                         except AttributeError:
-                            # print("{0}".format(child))
                             continue
                     else:
                         continue
