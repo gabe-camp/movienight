@@ -6,7 +6,7 @@ platform:
   arch: arm
 
 workspace:
-  path: /
+  path: /movienight/movienight
 
 steps:
 - name: lint
