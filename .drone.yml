@@ -1,0 +1,21 @@
+kind: pipeline
+name: movienight-ci
+
+platform:
+  os: linux
+  arch: arm
+
+steps:
+- name: lint
+  image: arm32v7/python:3.6-alpine
+  commands:
+    - pip install -r requirements.txt
+    - pip install flake8
+    - flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+    - flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+- name: test
+  image: arm32v7/python:3.6-alpine
+  pull: if-not-exists
+  commands:
+    - pip install -r requirements.txt
+    - pytest
