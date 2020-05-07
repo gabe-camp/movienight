@@ -26,8 +26,10 @@ def test_months(scrape_movies):
     assert len(scrape_movies) is mnd.NUM_MONTHS, "Should be {}".format(mnd.NUM_MONTHS)
 
 def test_release_dates(scrape_movies):
-    month = list(scrape_movies.keys())[1]
-    assert len(scrape_movies[month][0]) > 1, "Should be more than one movie being released in a single month"
+    total = [ len(scrape_movies[x]) for x in scrape_movies.keys() ]
+    #month = list(scrape_movies.keys())[0]
+    #assert len(scrape_movies[month][0]) > 1, "Should be more than one movie being released in a single month"
+    assert sum(total) > 1, "Should have found more than one movie"
 
 def test_movie_details(scrape_movies):
     month = list(scrape_movies.keys())[2]
