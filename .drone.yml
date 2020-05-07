@@ -5,6 +5,9 @@ platform:
   os: linux
   arch: arm
 
+workspace:
+  path: /
+
 steps:
 - name: lint
   image: arm32v7/python:3.6-alpine
