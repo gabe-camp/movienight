@@ -21,4 +21,4 @@ steps:
   pull: if-not-exists
   commands:
     - pip install -r requirements.txt
-    - pytest
+    - python -m pytest
