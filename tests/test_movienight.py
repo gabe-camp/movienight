@@ -3,6 +3,8 @@ import pytest
 # connect to imdb_url and get 200
 from requests import get
 from movienight import MovieNightDefs as mnd
+from movienight import MovieNight
+
 def test_url():
     r = get(mnd.imdb_url)
     assert r.status_code == 200, "Should be 200"
