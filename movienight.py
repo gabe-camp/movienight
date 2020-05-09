@@ -6,7 +6,12 @@ from requests import get
 from requests.exceptions import RequestException
 from contextlib import closing
 from datetime import date
-import pprint
+import json
+
+
+PRINT_NICE = 1
+PRINT_RAW = 2
+PRINT_JSON = 3
 
 
 #
@@ -81,7 +86,7 @@ class MovieNightData:
     """
     Data class to hold movie details when scraping
     """
-    def __init__(self, release_date, title):
+    def __init__(self, release_date, title, mode=PRINT_JSON):
         self.release_date = release_date
         self.title = title
         self.genres = []
@@ -90,9 +95,17 @@ class MovieNightData:
         self.stars = []
         self.runtime = ""
         self.rating = ""
+        self.mode = mode
 
     def print(self):
-        return self.print_nice()
+        if self.mode == PRINT_NICE:
+            return self.print_nice()
+        elif self.mode == PRINT_RAW:
+            return self.print_raw()
+        elif self.mode == PRINT_JSON:
+            return self.print_json()
+        else:
+            return str(self)
 
     def print_nice(self):
         return "{0} : {1} : {2} : {3} : {4} : {5} : {6} : {7}".format(
@@ -116,6 +129,10 @@ class MovieNightData:
              "outline": self.outline}
         return str(m)
 
+    def print_json(self):
+        m = json.dumps(self, separators=(',', ':'))
+        return m
+
     def __str__(self):
         return self.print()
 
@@ -127,8 +144,10 @@ class MovieNightData:
 
 
 class MovieNight:
-    @staticmethod
-    def movienight():
+    def __init__(self, args):
+        pass
+
+    def movienight(self):
         all_movies = {}
         this_month = MovieNightUtils.get_this_month()
         for i in range(0, MovieNightDefs.NUM_MONTHS):
@@ -162,7 +181,8 @@ class MovieNight:
                             movie = MovieNightData(release_date, title)
                             am_parsing = True
                         # p.img.title = cert (if exists)
-                        if child.p and len(child.attrs) > 0 and 'cert-runtime-genre' in child.p['class'][0]: # rating, runtime, genre
+                        # rating, runtime, genre
+                        if child.p and len(child.attrs) > 0 and 'cert-runtime-genre' in child.p['class'][0]:
                             for tag in child.p.contents:
                                 if isinstance(tag, Tag):
                                     if 'img' in tag.name:
@@ -200,8 +220,17 @@ class MovieNight:
 
 
 if __name__ == '__main__':
+    #
+    # opts
+    # - num_months
+    # - filters
+    #   - actor list
+    #   - genre list
+    #   - director list
+    # - print format (json, csv, raw?)
+    #
     movies = MovieNight.movienight()
 
+    import pprint
     pp = pprint.PrettyPrinter(indent=2)
     pp.pprint(movies)
-
