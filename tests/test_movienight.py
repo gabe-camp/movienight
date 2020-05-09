@@ -19,7 +19,8 @@ def test_scrape_url():
 from movienight import MovieNight as mn
 @pytest.fixture(scope="module")
 def scrape_movies():
-    movies = mn.movienight()
+    mn = MovieNight()
+    movies = mn.getMovies()
     return movies
 
 def test_months(scrape_movies):
