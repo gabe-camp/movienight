@@ -130,8 +130,16 @@ class MovieNightData:
         return str(m)
 
     def print_json(self):
-        m = json.dumps(self, separators=(',', ':'))
-        return m
+        m = '"release_date": "{}","title": "{}","rating": "{}","runtime": "{}","genres": {},"directors": {},"stars": {},"outline": "{}"'.format(
+                self.release_date,
+                self.title,
+                self.rating,
+                self.runtime,
+                self.genres,
+                self.directors,
+                self.stars,
+                self.outline)
+        return str(m)
 
     def __str__(self):
         return self.print()
@@ -144,15 +152,14 @@ class MovieNightData:
 
 
 class MovieNight:
-    def __init__(self, args):
-        pass
+    def __init__(self, args=''):
+        self.all_movies={}
 
-    def movienight(self):
-        all_movies = {}
+    def getMovies(self):
         this_month = MovieNightUtils.get_this_month()
         for i in range(0, MovieNightDefs.NUM_MONTHS):
             next_month = MovieNightUtils.get_x_month(this_month, i)
-            all_movies[MovieNightUtils.date_format(next_month)] = []
+            self.all_movies[MovieNightUtils.date_format(next_month)] = []
             raw_html = MovieNightUtils.simple_get(
                 MovieNightDefs.imdb_url_coming_soon + MovieNightUtils.date_format(next_month))
             full_page = BeautifulSoup(raw_html, 'html.parser')
@@ -169,7 +176,7 @@ class MovieNight:
                         release_date = child.text.strip()
                     elif 'div' in child.name and len(child.attrs) > 0 and 'list_item' in child['class'][0]:  # title
                         # h4.text = "movie title (year)"
-                        title = child.h4.text
+                        title = child.h4.text.strip()
                         if am_parsing:
                             # at this point we are finished parsing the current "list item"/movie
                             # so can add it to the months releases
@@ -186,15 +193,16 @@ class MovieNight:
                             for tag in child.p.contents:
                                 if isinstance(tag, Tag):
                                     if 'img' in tag.name:
-                                        movie.rating = tag['title']
+                                        movie.rating = tag['title'].strip()
                         # p.time.text = runtime
                                     if 'time' in tag.name:
-                                        movie.runtime = tag.text
+                                        movie.runtime = tag.text.strip()
                         #   p.span.text = genre
                                     if 'span' in tag.name:
-                                        movie.genres.append(tag.text)
+                                        if '|' not in tag.text:
+                                            movie.genres.append(tag.text.strip())
                     elif 'div' in child.name and 'outline' in child['class'][0]:  # outline
-                        movie.outline = child.text
+                        movie.outline = child.text.strip()
                     elif 'div' in child.name and 'txt-block' in child['class'][0]:  # director, stars
                         try:
                             if 'Director' in child.h5.text:
@@ -215,8 +223,8 @@ class MovieNight:
                     else:
                         continue
 
-            all_movies[MovieNightUtils.date_format(next_month)].append(releases)
-        return all_movies
+            self.all_movies[MovieNightUtils.date_format(next_month)].append(releases)
+        return self.all_movies
 
 
 if __name__ == '__main__':
@@ -229,8 +237,9 @@ if __name__ == '__main__':
     #   - director list
     # - print format (json, csv, raw?)
     #
-    movies = MovieNight.movienight()
-
-    import pprint
-    pp = pprint.PrettyPrinter(indent=2)
-    pp.pprint(movies)
+    mn = MovieNight()
+    movies = mn.getMovies()
+    print('{}'.format(movies))
+    #import pprint
+    #pp = pprint.PrettyPrinter(indent=2)
+    #pp.pprint(movies)
