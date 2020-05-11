@@ -8,11 +8,9 @@ from contextlib import closing
 from datetime import date
 import json
 
-
 PRINT_NICE = 1
 PRINT_RAW = 2
 PRINT_JSON = 3
-
 
 #
 # static definitions
@@ -21,7 +19,7 @@ class MovieNightDefs:
     imdb_url = 'https://www.imdb.com/'
     imdb_url_coming_soon = imdb_url + 'movies-coming-soon'
     default_region = '?region=CA'
-    NUM_MONTHS = 8
+    NUM_MONTHS = 3
 
 
 #
@@ -152,12 +150,25 @@ class MovieNightData:
 
 
 class MovieNight:
-    def __init__(self, args=''):
+    def __init__(self, 
+            months=MovieNightDevs.NUM_MONTHS,
+            actors=[],
+            genres=[],
+            directors=[],
+            printas=PRINT_JSON):
         self.all_movies={}
+        self.months=months
+        self.filter=[actors,genres,directors]
+        if 'json' in printas:
+            self.printas=PRINT_JSON
+        elif 'csv' in printas:
+            self.printas=PRINT_CSV
+        elif 'raw' in printas:
+            self.printas=PRINT_RAW
 
     def getMovies(self):
         this_month = MovieNightUtils.get_this_month()
-        for i in range(0, MovieNightDefs.NUM_MONTHS):
+        for i in range(0, self.months):
             next_month = MovieNightUtils.get_x_month(this_month, i)
             self.all_movies[MovieNightUtils.date_format(next_month)] = []
             raw_html = MovieNightUtils.simple_get(
@@ -182,10 +193,10 @@ class MovieNight:
                             # so can add it to the months releases
                             releases.append(movie)
                             # and a new movie instance can be initiated
-                            movie = MovieNightData(release_date, title)
+                            movie = MovieNightData(release_date, title, self.printas)
                         else:
                             # first time through
-                            movie = MovieNightData(release_date, title)
+                            movie = MovieNightData(release_date, title, self.printas)
                             am_parsing = True
                         # p.img.title = cert (if exists)
                         # rating, runtime, genre
@@ -237,9 +248,15 @@ if __name__ == '__main__':
     #   - director list
     # - print format (json, csv, raw?)
     #
-    mn = MovieNight()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-m','--months', type=int, help='number of months (inclusive) to look for movies')
+    parser.add_argument('-a','--actor', type=str, action='append', help='add an actor to the filter')
+    parser.add_argument('-g','--genre', type=str, action='append', help='add a genre to the filter')
+    parser.add_argument('-d','--director', type=str, action='append', help='add a director to the filter')
+    parser.add_argument('-f','--format', type=str, choices={'raw','json','csv'}, help='format of print output')
+    args = parser.parse_args()
+    
+    mn = MovieNight(months=args.months,actors=args.actor,genres=args.genre,directors=args.director,printas=args.format)
     movies = mn.getMovies()
     print('{}'.format(movies))
-    #import pprint
-    #pp = pprint.PrettyPrinter(indent=2)
-    #pp.pprint(movies)
