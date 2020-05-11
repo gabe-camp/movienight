@@ -110,7 +110,7 @@ class MovieNight:
                  genres=[],
                  directors=[]):
         self.all_movies = {}
-        self.months = months
+        self.months = int(months)
         self.filter = [actors, genres, directors]
 
     def getMovies(self):
