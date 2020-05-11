@@ -1,4 +1,5 @@
 FROM arm32v7/python:3.6-alpine
+EXPOSE 80
 
 MAINTAINER Gabriel Campanella "gabe.camp@gmail.com"
 
