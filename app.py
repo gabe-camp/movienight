@@ -1,6 +1,8 @@
 #app.py
 
 from flask import Flask, request
+from movienight import MovieNight
+import json
 
 app = Flask(__name__)
 
@@ -23,9 +25,7 @@ def movies():
             
         mn = MovieNight(months=months,actors=actors,genres=genres,directors=directors)
         movies = mn.getMovies()
-        r = movies.print()
-
-        return r
+        return mn.toJSON()
 
 
 if __name__ == '__main__':

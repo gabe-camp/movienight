@@ -8,10 +8,6 @@ from contextlib import closing
 from datetime import date
 import json
 
-PRINT_NICE = 1
-PRINT_RAW = 2
-PRINT_JSON = 3
-
 #
 # static definitions
 #
@@ -84,7 +80,7 @@ class MovieNightData:
     """
     Data class to hold movie details when scraping
     """
-    def __init__(self, release_date, title, mode=PRINT_JSON):
+    def __init__(self, release_date, title):
         self.release_date = release_date
         self.title = title
         self.genres = []
@@ -93,19 +89,8 @@ class MovieNightData:
         self.stars = []
         self.runtime = ""
         self.rating = ""
-        self.mode = mode
 
     def print(self):
-        if self.mode == PRINT_NICE:
-            return self.print_nice()
-        elif self.mode == PRINT_RAW:
-            return self.print_raw()
-        elif self.mode == PRINT_JSON:
-            return self.print_json()
-        else:
-            return str(self)
-
-    def print_nice(self):
         return "{0} : {1} : {2} : {3} : {4} : {5} : {6} : {7}".format(
                     self.release_date,
                     self.title,
@@ -114,69 +99,26 @@ class MovieNightData:
                     "".join(self.genres),
                     ",".join(self.directors),
                     ",".join(self.stars),
-                    self.outline.strip())
-
-    def print_raw(self):
-        m = {"release_date": self.release_date,
-             "title": self.title,
-             "rating": self.rating,
-             "runtime": self.runtime,
-             "genres": self.genres,
-             "directors": self.directors,
-             "stars": self.stars,
-             "outline": self.outline}
-        return str(m)
-
-    def print_json(self):
-        m = '"release_date": "{}","title": "{}","rating": "{}","runtime": "{}","genres": {},"directors": {},"stars": {},"outline": "{}"'.format(
-                self.release_date,
-                self.title,
-                self.rating,
-                self.runtime,
-                self.genres,
-                self.directors,
-                self.stars,
-                self.outline)
-        return str(m)
-
-    def __str__(self):
-        return self.print()
-
-    def __unicode__(self):
-        return self.print()
-
-    def __repr__(self):
-        return self.print()
-
+                    self.outline)
 
 class MovieNight:
     def __init__(self, 
-            months=MovieNightDevs.NUM_MONTHS,
+            months=MovieNightDefs.NUM_MONTHS,
             actors=[],
             genres=[],
-            directors=[],
-            printas=PRINT_JSON):
+            directors=[]):
         self.all_movies={}
         self.months=months
         self.filter=[actors,genres,directors]
-        if 'json' in printas:
-            self.printas=PRINT_JSON
-        elif 'csv' in printas:
-            self.printas=PRINT_CSV
-        elif 'raw' in printas:
-            self.printas=PRINT_RAW
 
     def getMovies(self):
         this_month = MovieNightUtils.get_this_month()
         for i in range(0, self.months):
             next_month = MovieNightUtils.get_x_month(this_month, i)
             self.all_movies[MovieNightUtils.date_format(next_month)] = []
-            raw_html = MovieNightUtils.simple_get(
-                MovieNightDefs.imdb_url_coming_soon + MovieNightUtils.date_format(next_month))
+            raw_html = MovieNightUtils.simple_get("{}{}".format(MovieNightDefs.imdb_url_coming_soon, MovieNightUtils.date_format(next_month)))
             full_page = BeautifulSoup(raw_html, 'html.parser')
-
             releases = []
-
             list_html = full_page.find("div", class_="list detail")
             am_parsing = False
             movie = ""
@@ -193,10 +135,10 @@ class MovieNight:
                             # so can add it to the months releases
                             releases.append(movie)
                             # and a new movie instance can be initiated
-                            movie = MovieNightData(release_date, title, self.printas)
+                            movie = MovieNightData(release_date, title)
                         else:
                             # first time through
-                            movie = MovieNightData(release_date, title, self.printas)
+                            movie = MovieNightData(release_date, title)
                             am_parsing = True
                         # p.img.title = cert (if exists)
                         # rating, runtime, genre
@@ -220,7 +162,8 @@ class MovieNight:
                                 for tag in child.contents:
                                     if isinstance(tag, Tag):
                                         if 'a' in tag.name:
-                                            movie.directors.append(tag.text.strip())
+                                            if '|' not in tag.text:
+                                                movie.directors.append(tag.text.strip())
                         except AttributeError:
                             continue
                         try:
@@ -228,14 +171,17 @@ class MovieNight:
                                 for tag in child.contents:
                                     if isinstance(tag, Tag):
                                         if 'a' in tag.name:
-                                            movie.stars.append(tag.text.strip())
+                                            if '|' not in tag.text:
+                                                movie.stars.append(tag.text.strip())
                         except AttributeError:
                             continue
                     else:
                         continue
 
             self.all_movies[MovieNightUtils.date_format(next_month)].append(releases)
-        return self.all_movies
+        
+    def toJSON(self):
+        return json.dumps(self.all_movies, default=lambda o: o.__dict__, indent=2)
 
 
 if __name__ == '__main__':
@@ -250,13 +196,13 @@ if __name__ == '__main__':
     #
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('-m','--months', type=int, help='number of months (inclusive) to look for movies')
+    parser.add_argument('-m','--months', type=int, default='2', help='number of months (inclusive) to look for movies')
     parser.add_argument('-a','--actor', type=str, action='append', help='add an actor to the filter')
     parser.add_argument('-g','--genre', type=str, action='append', help='add a genre to the filter')
     parser.add_argument('-d','--director', type=str, action='append', help='add a director to the filter')
-    parser.add_argument('-f','--format', type=str, choices={'raw','json','csv'}, help='format of print output')
+    parser.add_argument('-f','--format', type=str, choices={'raw','json','csv'}, default='json', help='format of print output')
     args = parser.parse_args()
     
-    mn = MovieNight(months=args.months,actors=args.actor,genres=args.genre,directors=args.director,printas=args.format)
+    mn = MovieNight(months=args.months,actors=args.actor,genres=args.genre,directors=args.director)
     movies = mn.getMovies()
-    print('{}'.format(movies))
+    print('{}'.format(mn.toJSON()))
