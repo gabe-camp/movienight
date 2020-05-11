@@ -19,11 +19,12 @@ def test_scrape_url():
 # results length > 0
 # results contains filled out movie details
 from movienight import MovieNight as mn
+import random
 @pytest.fixture(scope="module")
 def scrape_movies():
     mn = MovieNight()
     movies = mn.getMovies()
-    return movies
+    return mn.all_movies
 
 def test_months(scrape_movies):
     assert len(scrape_movies) is mnd.NUM_MONTHS, "Should be {}".format(mnd.NUM_MONTHS)
@@ -35,5 +36,7 @@ def test_release_dates(scrape_movies):
     assert sum(total) > 1, "Should have found more than one movie"
 
 def test_movie_details(scrape_movies):
-    month = list(scrape_movies.keys())[2]
-    assert len(scrape_movies[month][0][1].outline) > 1, "Movies should have an outline"
+    n = random.randint(0,len(scrape_movies.keys())-1)
+    month = list(scrape_movies.keys())[n]
+    n = random.randint(0,len(scrape_movies[month])-1)
+    assert len(scrape_movies[month][n].outline) > 1, "Movies should have an outline"

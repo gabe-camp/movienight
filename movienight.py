@@ -8,6 +8,7 @@ from contextlib import closing
 from datetime import date
 import json
 
+
 #
 # static definitions
 #
@@ -101,22 +102,26 @@ class MovieNightData:
                     ",".join(self.stars),
                     self.outline)
 
+
 class MovieNight:
-    def __init__(self, 
-            months=MovieNightDefs.NUM_MONTHS,
-            actors=[],
-            genres=[],
-            directors=[]):
-        self.all_movies={}
-        self.months=months
-        self.filter=[actors,genres,directors]
+    def __init__(self,
+                 months=MovieNightDefs.NUM_MONTHS,
+                 actors=[],
+                 genres=[],
+                 directors=[]):
+        self.all_movies = {}
+        self.months = months
+        self.filter = [actors, genres, directors]
 
     def getMovies(self):
         this_month = MovieNightUtils.get_this_month()
         for i in range(0, self.months):
             next_month = MovieNightUtils.get_x_month(this_month, i)
             self.all_movies[MovieNightUtils.date_format(next_month)] = []
-            raw_html = MovieNightUtils.simple_get("{}{}".format(MovieNightDefs.imdb_url_coming_soon, MovieNightUtils.date_format(next_month)))
+            raw_html = MovieNightUtils.simple_get(
+                    "{}{}".format(
+                        MovieNightDefs.imdb_url_coming_soon,
+                        MovieNightUtils.date_format(next_month)))
             full_page = BeautifulSoup(raw_html, 'html.parser')
             releases = []
             list_html = full_page.find("div", class_="list detail")
@@ -178,9 +183,11 @@ class MovieNight:
                     else:
                         continue
 
-            self.all_movies[MovieNightUtils.date_format(next_month)].append(releases)
-        
+            self.all_movies[MovieNightUtils.date_format(next_month)] = releases
+        return 1
+
     def toJSON(self):
+        # need to apply filters
         return json.dumps(self.all_movies, default=lambda o: o.__dict__, indent=2)
 
 
@@ -196,13 +203,15 @@ if __name__ == '__main__':
     #
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('-m','--months', type=int, default='2', help='number of months (inclusive) to look for movies')
-    parser.add_argument('-a','--actor', type=str, action='append', help='add an actor to the filter')
-    parser.add_argument('-g','--genre', type=str, action='append', help='add a genre to the filter')
-    parser.add_argument('-d','--director', type=str, action='append', help='add a director to the filter')
-    parser.add_argument('-f','--format', type=str, choices={'raw','json','csv'}, default='json', help='format of print output')
+    parser.add_argument('-m', '--months', type=int, default='2', help='number of months (inclusive) to look for movies')
+    parser.add_argument('-a', '--actor', type=str, action='append', help='add an actor to the filter')
+    parser.add_argument('-g', '--genre', type=str, action='append', help='add a genre to the filter')
+    parser.add_argument('-d', '--director', type=str, action='append', help='add a director to the filter')
     args = parser.parse_args()
-    
-    mn = MovieNight(months=args.months,actors=args.actor,genres=args.genre,directors=args.director)
-    movies = mn.getMovies()
-    print('{}'.format(mn.toJSON()))
+
+    mn = MovieNight(months=args.months, actors=args.actor, genres=args.genre, directors=args.director)
+    r = mn.getMovies()
+    if r > 0:
+        print('{}'.format(mn.toJSON()))
+    else:
+        print("Error")
