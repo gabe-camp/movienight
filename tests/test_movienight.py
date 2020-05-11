@@ -38,5 +38,7 @@ def test_release_dates(scrape_movies):
 def test_movie_details(scrape_movies):
     n = random.randint(0,len(scrape_movies.keys())-1)
     month = list(scrape_movies.keys())[n]
+    if len(scrape_movies[month]) == 0:
+        return
     n = random.randint(0,len(scrape_movies[month])-1)
     assert len(scrape_movies[month][n].outline) > 1, "Movies should have an outline"
