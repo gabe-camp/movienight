@@ -1,5 +1,4 @@
 FROM arm32v7/python:3.6-alpine
-EXPOSE 80
 
 MAINTAINER Gabriel Campanella "gabe.camp@gmail.com"
 
@@ -11,6 +10,8 @@ RUN pip install -r /app/requirements.txt
 
 COPY . /app
 
-ENTRYPOINT [ "python" ]
-
-CMD [ "app.py" ]
+# removed because will be specified via k8s
+#
+#ENTRYPOINT [ "python" ]
+#
+#CMD [ "app.py" ]

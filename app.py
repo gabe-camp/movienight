@@ -33,5 +33,6 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('host', type=str, nargs='?', default='localhost')
+    parser.add_argument('port', type=int, nargs='?', default=80)
     args = parser.parse_args()
-    app.run(host=args.host, port=80)
+    app.run(host=args.host, port=args.port)
