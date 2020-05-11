@@ -184,7 +184,7 @@ class MovieNight:
                         continue
 
             self.all_movies[MovieNightUtils.date_format(next_month)] = releases
-        return 1
+        return 2
 
     def toJSON(self):
         # need to apply filters
