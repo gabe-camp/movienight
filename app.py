@@ -32,6 +32,6 @@ def movies():
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('host', type=str, default='localhost')
+    parser.add_argument('host', type=str, nargs='?', default='localhost')
     args = parser.parse_args()
     app.run(host=args.host, port=80)
