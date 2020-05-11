@@ -22,3 +22,12 @@ steps:
   commands:
     - pip install -r requirements.txt
     - python -m pytest
+- name: publish
+  image: plugins/docker
+  settings:
+    repo: gabecamp/movienight
+    tags: [ "${DRONE_COMMIT_SHA:0:7}", "latest"]
+    username:
+      from_secret: dockerhub_username
+    password:
+      from_secret: dockerhub_password
