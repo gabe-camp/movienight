@@ -10,8 +10,5 @@ RUN pip install -r /app/requirements.txt
 
 COPY . /app
 
-# removed because will be specified via k8s
-#
-#ENTRYPOINT [ "python" ]
-#
-#CMD [ "app.py" ]
+EXPOSE 8080
+CMD [ "python", "app.py" ]
