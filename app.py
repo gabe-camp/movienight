@@ -31,8 +31,10 @@ def movies():
 
 if __name__ == '__main__':
     import argparse
+    from os import environ as env
     parser = argparse.ArgumentParser()
     parser.add_argument('host', type=str, nargs='?', default='0.0.0.0')
     parser.add_argument('port', type=int, nargs='?', default=8080)
     args = parser.parse_args()
-    app.run(host=args.host, port=args.port)
+    DEBUG_MODE = int(env.get('DEBUG_MODE', 1))
+    app.run(host=args.host, port=args.port, debug=DEBUG_MODE)
