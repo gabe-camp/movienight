@@ -10,5 +10,6 @@ RUN pip install -r /app/requirements.txt
 
 COPY . /app
 
+ENV PORT 8080
 EXPOSE 8080
-CMD [ "python", "app.py" ]
+CMD [ "gunicorn", "app:app", "--config=config.py" ]

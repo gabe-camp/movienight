@@ -1,6 +1,7 @@
 from flask import Flask, request
 from movienight import MovieNight
 from flask_cors import CORS
+import config
 
 app = Flask(__name__)
 CORS(app)
@@ -36,10 +37,7 @@ def movies():
 
 if __name__ == '__main__':
     import argparse
-    from os import environ as env
     parser = argparse.ArgumentParser()
     parser.add_argument('host', type=str, nargs='?', default='0.0.0.0')
-    parser.add_argument('port', type=int, nargs='?', default=8080)
     args = parser.parse_args()
-    DEBUG_MODE = int(env.get('DEBUG_MODE', 1))
-    app.run(host=args.host, port=args.port, debug=DEBUG_MODE)
+    app.run(host=args.host, port=config.PORT, debug=config.DEBUG_MODE)
